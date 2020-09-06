@@ -1,4 +1,4 @@
-package com.github.b1412.cannon.entity
+package com.github.b1412.api.entity
 
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.LastModifiedDate
