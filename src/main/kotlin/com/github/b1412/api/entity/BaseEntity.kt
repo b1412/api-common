@@ -10,20 +10,24 @@ import javax.persistence.GenerationType
 import javax.persistence.Id
 import javax.persistence.MappedSuperclass
 import javax.persistence.Version
+import org.hibernate.annotations.Where
 
+@Where(clause = "deletedAt is not null")
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener::class)
 abstract class BaseEntity(
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long? = null,
+        @Id
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
+        var id: Long? = null,
 
-    @Version
-    var version: Long? = null,
+        @Version
+        var version: Long? = null,
 
-    @CreatedDate
-    var createdAt: ZonedDateTime? = null,
+        @CreatedDate
+        var createdAt: ZonedDateTime? = null,
 
-    @LastModifiedDate
-    var updatedAt: ZonedDateTime? = null
+        @LastModifiedDate
+        var updatedAt: ZonedDateTime? = null,
+
+        var deletedAt: ZonedDateTime? = null
 )
