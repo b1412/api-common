@@ -1,6 +1,5 @@
 .gitconfig
 .idea
 build
-./gradle
+.gradle
 *.iml
-./gradle
