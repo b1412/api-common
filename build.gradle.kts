@@ -37,18 +37,25 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 
+    implementation("com.amazonaws:aws-java-sdk-s3:1.11.210")
+
     implementation("org.jooq:joor-java-8:0.9.12")
     implementation("io.github.microutils:kotlin-logging:1.7.6")
+    implementation("commons-io:commons-io:2.8.0")
+
+    implementation("org.springframework.boot:spring-boot-starter-validation")
+    implementation("org.springframework.boot:spring-boot-starter-freemarker")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-security")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-hibernate5")
     implementation("org.springframework.boot:spring-boot-starter-web") {
         exclude(group = "org.springframework.boot", module = "spring-boot-starter-tomcat")
     }
-    implementation("javax.servlet:javax.servlet-api:3.1.0")
 
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-hibernate5")
+
+    compileOnly("javax.servlet:javax.servlet-api:3.1.0")
 
 }
 fun DependencyHandlerScope.arrow(arrowVersion: String) {
