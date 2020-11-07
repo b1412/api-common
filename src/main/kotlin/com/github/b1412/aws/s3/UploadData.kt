@@ -1,4 +1,4 @@
-package com.github.b1412.s3
+package com.github.b1412.aws.s3
 
 
 import java.io.Serializable
