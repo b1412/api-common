@@ -2,7 +2,7 @@ package com.github.b1412.api.controller
 
 import arrow.core.toOption
 import com.github.b1412.api.entity.BaseEntity
-import com.github.b1412.api.service.base.BaseService
+import com.github.b1412.api.service.BaseService
 import com.github.b1412.extenstions.copyFrom
 import com.github.b1412.extenstions.responseEntityOk
 import org.springframework.beans.factory.annotation.Autowired
