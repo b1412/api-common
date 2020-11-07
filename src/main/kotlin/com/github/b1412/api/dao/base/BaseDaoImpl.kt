@@ -1,7 +1,6 @@
 package com.github.b1412.api.dao.base
 
 import arrow.core.getOrElse
-import com.github.b1412.cannon.dao.base.BaseDao
 import com.github.b1412.jpa.JpaUtil
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page

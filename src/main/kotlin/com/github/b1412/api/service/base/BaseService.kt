@@ -7,7 +7,7 @@ import arrow.core.getOrElse
 import arrow.core.toOption
 import com.github.b1412.api.entity.BaseEntity
 import com.github.b1412.api.service.SecurityFilter
-import com.github.b1412.cannon.dao.base.BaseDao
+import com.github.b1412.api.dao.base.BaseDao
 import com.github.b1412.extenstions.copyFrom
 import org.joor.Reflect
 import org.springframework.beans.factory.annotation.Autowired
