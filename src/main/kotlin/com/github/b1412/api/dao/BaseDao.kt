@@ -1,4 +1,4 @@
-package com.github.b1412.api.dao.base
+package com.github.b1412.api.dao
 
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable

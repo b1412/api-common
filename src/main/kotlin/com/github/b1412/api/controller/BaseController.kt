@@ -1,4 +1,4 @@
-package com.github.b1412.api.controller.base
+package com.github.b1412.api.controller
 
 import arrow.core.toOption
 import com.github.b1412.api.entity.BaseEntity

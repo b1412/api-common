@@ -1,4 +1,4 @@
-package com.github.b1412.api.dao.base
+package com.github.b1412.api.dao
 
 import arrow.core.getOrElse
 import com.github.b1412.jpa.JpaUtil
