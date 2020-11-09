@@ -25,7 +25,6 @@ class RedisCacheClient : CacheClient {
         val cache = runCatching { template!!.opsForValue().get(key) as T? }
         return cache.fold({it.toOption()},{ Option.empty()}).getOrElse {
             val value = supplier()
-            logger.debug("Query key [{}] from cache success, value [{}] ", key, value)
             template!!.opsForValue().set(key, value as Any)
             value
         }
