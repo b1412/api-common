@@ -55,6 +55,18 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-hibernate5")
 
+    implementation("org.apache.commons:commons-csv:1.8")
+    implementation ("com.github.czyzby:kotlin-times:1.0")
+
+    implementation("org.jxls:jxls:2.4.0")
+    implementation("org.jxls:jxls-poi:1.0.12")
+    implementation("org.jxls:jxls-jexcel:1.0.6")
+    implementation("org.jxls:jxls-reader:2.0.2")
+    implementation("com.google.guava:guava:30.0-jre")
+
+    implementation("org.apache.commons:commons-lang3:3.11")
+
+
     compileOnly("javax.servlet:javax.servlet-api:3.1.0")
 
 }
