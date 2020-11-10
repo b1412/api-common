@@ -49,8 +49,8 @@ abstract class BaseController<T, ID : Serializable> {
     open fun deleteOne(@PathVariable id: ID, request: HttpServletRequest): ResponseEntity<*> {
         return runCatching { baseService.deleteById(id) }
                 .fold(
-                        { ResponseEntity.notFound().build() },
-                        { ResponseEntity.noContent().build<Void>() }
+                        { ResponseEntity.noContent().build<Void>() },
+                        { ResponseEntity.notFound().build() }
                 )
     }
 }
