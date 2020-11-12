@@ -8,11 +8,13 @@ import com.github.b1412.extenstions.responseEntityOk
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.Pageable
 import org.springframework.data.repository.findByIdOrNull
+import org.springframework.http.HttpHeaders
 import org.springframework.http.ResponseEntity
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.util.UriComponentsBuilder
 import java.io.Serializable
 import javax.servlet.http.HttpServletRequest
 
@@ -33,9 +35,13 @@ abstract class BaseController<T, ID : Serializable> {
                 )
     }
 
-    open fun saveOne(@Validated @RequestBody input: T, request: HttpServletRequest): ResponseEntity<*> {
+    open fun saveOne(@Validated @RequestBody input: T, request: HttpServletRequest, uriComponent: UriComponentsBuilder): ResponseEntity<*> {
         baseService.syncSeleceOneFromDb(input as BaseEntity)
-        return ResponseEntity.ok(baseService.save(input))
+        baseService.save(input)
+        val uriComponents = uriComponent.path("/v1/user/{id}").buildAndExpand(input.id)
+        val headers = HttpHeaders()
+        headers.location = uriComponents.toUri()
+        return ResponseEntity.created(uriComponents.toUri()).build<Void>()
     }
 
     open fun updateOne(@PathVariable id: ID, @Validated @RequestBody input: T, request: HttpServletRequest): ResponseEntity<*> {

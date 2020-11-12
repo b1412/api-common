@@ -56,7 +56,7 @@ dependencies {
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-hibernate5")
 
     implementation("org.apache.commons:commons-csv:1.8")
-    implementation ("com.github.czyzby:kotlin-times:1.0")
+    implementation("com.github.czyzby:kotlin-times:1.0")
 
     implementation("org.jxls:jxls:2.4.0")
     implementation("org.jxls:jxls-poi:1.0.12")
