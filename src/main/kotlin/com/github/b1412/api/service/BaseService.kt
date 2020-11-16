@@ -1,9 +1,6 @@
 package com.github.b1412.api.service
 
-import arrow.core.Option
-import arrow.core.Some
-import arrow.core.getOrElse
-import arrow.core.toOption
+import arrow.core.*
 import com.github.b1412.api.entity.BaseEntity
 import com.github.b1412.api.dao.BaseDao
 import com.github.b1412.extenstions.copyFrom
@@ -36,25 +33,25 @@ abstract class BaseService<T, ID : Serializable>(
         return dao.searchByFilter(params + securityFilters, pageable)
     }
 
-    fun syncSeleceOneFromDb(baseEntity: BaseEntity) {
+    fun syncFromDb(baseEntity: BaseEntity) {
         val fields = baseEntity.javaClass.declaredFields.toList()
         fields.forEach { field ->
             val type = field.type
             val any = Reflect.on(baseEntity).get<Any>(field.name)
             if (BaseEntity::class.java.isAssignableFrom(field.type)) {
-                val one2oneAnno = field.getAnnotation(OneToOne::class.java)
-                if (one2oneAnno != null) {
+                val one2oneAnnotation = field.getAnnotation(OneToOne::class.java)
+                if (one2oneAnnotation != null) {
                     Reflect.on(any).set(baseEntity::class.java.simpleName.toLowerCase(), baseEntity)
                 } else {
-                    val option = getObject(baseEntity, field, type)
-                    when (option) {
+                    when (val option = getObject(baseEntity, field, type)) {
                         is Some -> Reflect.on(baseEntity).set(field.name, option.t)
+                        None -> TODO()
                     }
                 }
             } else if (field.type.isAssignableFrom(MutableList::class.java)) {
-                val oneToManyAnno = field.getAnnotation(OneToMany::class.java)
-                val manyToManyAnno = field.getAnnotation(ManyToMany::class.java)
-                if (oneToManyAnno != null) {
+                val oneToManyAnnotation = field.getAnnotation(OneToMany::class.java)
+                val manyToManyAnnotation = field.getAnnotation(ManyToMany::class.java)
+                if (oneToManyAnnotation != null) {
                     val list = baseEntity.toOption()
                             .flatMap { Reflect.on(it).get<Any>(field.name).toOption() }
                             .map { it as MutableList<out BaseEntity> }
@@ -63,16 +60,16 @@ abstract class BaseService<T, ID : Serializable>(
                                 val id = Reflect.on(obj).get<Any>("id")
                                 when (id) {
                                     null -> {
-                                        if (oneToManyAnno.mappedBy.isNotBlank()) {
-                                            Reflect.on(obj).set(oneToManyAnno.mappedBy, baseEntity)
+                                        if (oneToManyAnnotation.mappedBy.isNotBlank()) {
+                                            Reflect.on(obj).set(oneToManyAnnotation.mappedBy, baseEntity)
                                         }
                                         obj
                                     }
                                     else -> {
                                         val oldNestedObj = entityManager.find(obj::class.java, id)
                                         val mergedObj = oldNestedObj.copyFrom(obj)
-                                        if (oneToManyAnno.mappedBy.isNotBlank()) {
-                                            Reflect.on(mergedObj).set(oneToManyAnno.mappedBy, baseEntity)
+                                        if (oneToManyAnnotation.mappedBy.isNotBlank()) {
+                                            Reflect.on(mergedObj).set(oneToManyAnnotation.mappedBy, baseEntity)
                                         }
                                         mergedObj
                                     }
@@ -80,7 +77,7 @@ abstract class BaseService<T, ID : Serializable>(
                             }
                     Reflect.on(any).call("clear")
                     Reflect.on(any).call("addAll", list)
-                } else if (manyToManyAnno != null) {
+                } else if (manyToManyAnnotation != null) {
                     val list = baseEntity.toOption()
                             .flatMap { Reflect.on(it).get<Any>(field.name).toOption() }
                             .map { it as MutableList<out BaseEntity> }

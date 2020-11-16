@@ -36,7 +36,7 @@ abstract class BaseController<T, ID : Serializable> {
     }
 
     open fun saveOne(@Validated @RequestBody input: T, request: HttpServletRequest, uriComponent: UriComponentsBuilder): ResponseEntity<*> {
-        baseService.syncSeleceOneFromDb(input as BaseEntity)
+        baseService.syncFromDb(input as BaseEntity)
         baseService.save(input)
         val uriComponents = uriComponent.path("/v1/user/{id}").buildAndExpand(input.id)
         val headers = HttpHeaders()
@@ -45,7 +45,7 @@ abstract class BaseController<T, ID : Serializable> {
     }
 
     open fun updateOne(@PathVariable id: ID, @Validated @RequestBody input: T, request: HttpServletRequest): ResponseEntity<*> {
-        baseService.syncSeleceOneFromDb(input as BaseEntity)
+        baseService.syncFromDb(input as BaseEntity)
         val persisted = baseService.findByIdOrNull(id)
         val merged = (persisted as Any).copyFrom(input) as T
         baseService.save(merged)
