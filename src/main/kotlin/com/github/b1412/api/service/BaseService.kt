@@ -39,37 +39,37 @@ abstract class BaseService<T, ID : Serializable>(
             val type = field.type
             val any = Reflect.on(baseEntity).get<Any>(field.name)
             if (BaseEntity::class.java.isAssignableFrom(field.type)) {
-                val one2oneAnnotation = field.getAnnotation(OneToOne::class.java)
-                if (one2oneAnnotation != null) {
+                val one2one = field.getAnnotation(OneToOne::class.java)
+                if (one2one != null) {
                     Reflect.on(any).set(baseEntity::class.java.simpleName.toLowerCase(), baseEntity)
                 } else {
                     when (val option = getObject(baseEntity, field, type)) {
                         is Some -> Reflect.on(baseEntity).set(field.name, option.t)
-                        None -> TODO()
                     }
                 }
             } else if (field.type.isAssignableFrom(MutableList::class.java)) {
-                val oneToManyAnnotation = field.getAnnotation(OneToMany::class.java)
-                val manyToManyAnnotation = field.getAnnotation(ManyToMany::class.java)
-                if (oneToManyAnnotation != null) {
+                val one2one = field.getAnnotation(OneToMany::class.java)
+                val many2Many = field.getAnnotation(ManyToMany::class.java)
+                if (one2one != null) {
                     val list = baseEntity.toOption()
                             .flatMap { Reflect.on(it).get<Any>(field.name).toOption() }
                             .map { it as MutableList<out BaseEntity> }
-                            .getOrElse { listOf<BaseEntity>() }
+                            .getOrElse { listOf() }
                             .map { obj ->
                                 val id = Reflect.on(obj).get<Any>("id")
                                 when (id) {
                                     null -> {
-                                        if (oneToManyAnnotation.mappedBy.isNotBlank()) {
-                                            Reflect.on(obj).set(oneToManyAnnotation.mappedBy, baseEntity)
+                                        if (one2one.mappedBy.isNotBlank()) {
+                                            Reflect.on(obj).set(one2one.mappedBy, baseEntity)
                                         }
+                                        syncFromDb(obj)
                                         obj
                                     }
                                     else -> {
                                         val oldNestedObj = entityManager.find(obj::class.java, id)
                                         val mergedObj = oldNestedObj.copyFrom(obj)
-                                        if (oneToManyAnnotation.mappedBy.isNotBlank()) {
-                                            Reflect.on(mergedObj).set(oneToManyAnnotation.mappedBy, baseEntity)
+                                        if (one2one.mappedBy.isNotBlank()) {
+                                            Reflect.on(mergedObj).set(one2one.mappedBy, baseEntity)
                                         }
                                         mergedObj
                                     }
@@ -77,14 +77,13 @@ abstract class BaseService<T, ID : Serializable>(
                             }
                     Reflect.on(any).call("clear")
                     Reflect.on(any).call("addAll", list)
-                } else if (manyToManyAnnotation != null) {
+                } else if (many2Many != null) {
                     val list = baseEntity.toOption()
                             .flatMap { Reflect.on(it).get<Any>(field.name).toOption() }
                             .map { it as MutableList<out BaseEntity> }
-                            .getOrElse { listOf<BaseEntity>() }
+                            .getOrElse { listOf() }
                             .map { obj ->
-                                val id = Reflect.on(obj).get<Any>("id")
-                                when (id) {
+                                when (val id = Reflect.on(obj).get<Any>("id")) {
                                     null -> obj
                                     else -> entityManager.find(obj::class.java, id)
                                 }
@@ -104,5 +103,3 @@ abstract class BaseService<T, ID : Serializable>(
                 .map { entityManager.find(type, it) }
     }
 }
-
-
