@@ -1,5 +1,6 @@
 package com.github.b1412.api.dao
 
+import arrow.core.Either
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
@@ -11,6 +12,6 @@ import java.io.Serializable
 interface BaseDao<T, ID : Serializable> : JpaRepository<T, ID>, JpaSpecificationExecutor<T> {
     fun searchByFilter(filter: Map<String, String>, pageable: Pageable): Page<T>
 
-    fun searchOneBy(filter: Map<String, String>): T
+    fun searchOneBy(filter: Map<String, String>): Either<Unit, T>
 }
 
