@@ -36,45 +36,8 @@ abstract class BaseService<T, ID : Serializable>(
         return dao.searchByFilter(params + securityFilters, pageable)
     }
 
-    fun syncFromDb(baseEntity: BaseEntity) {
-        var fields = baseEntity.javaClass.declaredFields.toList()
-        // TODO user fields
-//        if (baseEntity.javaClass.superclass == User::class.java) {
-//            fields += listOf(*User::class.java.declaredFields)
-//        }
-        fields.forEach { field ->
-            val type = field.type
-            if (BaseEntity::class.java.isAssignableFrom(field.type)) {
-                val option = getObject(baseEntity, field, type)
-                when (option) {
-                    is Some -> Reflect.on(baseEntity).set(field.name, option.t)
-                }
-            } else if (field.type.isAssignableFrom(MutableList::class.java)) {
-                val list = baseEntity.toOption()
-                        .flatMap { Reflect.on(it).get<Any>(field.name).toOption() }
-                        .map { e -> e as MutableList<out BaseEntity> }
-                        .getOrElse { listOf<BaseEntity>() }
-                        .map { obj ->
-                            val id = Reflect.on(obj).get<Any>("id")
-                            when (id) {
-                                null -> obj
-                                else -> entityManager.find(obj::class.java, id)
-                            }
-                        }
-                if (list.isNotEmpty()) {
-                    Reflect.on(baseEntity).set(field.name, list)
-                }
-
-            }
-        }
-    }
-
     fun syncSeleceOneFromDb(baseEntity: BaseEntity) {
-        var fields = baseEntity.javaClass.declaredFields.toList()
-        // TODO user fields
-//        if (baseEntity.javaClass.superclass == User::class.java) {
-//            fields += listOf(*User::class.java.declaredFields)
-//        }
+        val fields = baseEntity.javaClass.declaredFields.toList()
         fields.forEach { field ->
             val type = field.type
             val any = Reflect.on(baseEntity).get<Any>(field.name)
@@ -91,25 +54,26 @@ abstract class BaseService<T, ID : Serializable>(
             } else if (field.type.isAssignableFrom(MutableList::class.java)) {
                 val oneToManyAnno = field.getAnnotation(OneToMany::class.java)
                 val manyToManyAnno = field.getAnnotation(ManyToMany::class.java)
-                if (oneToManyAnno != null && oneToManyAnno.orphanRemoval) {
+                if (oneToManyAnno != null) {
                     val list = baseEntity.toOption()
-                            .flatMap { it -> Reflect.on(it).get<Any>(field.name).toOption() }
+                            .flatMap { Reflect.on(it).get<Any>(field.name).toOption() }
                             .map { it as MutableList<out BaseEntity> }
                             .getOrElse { listOf<BaseEntity>() }
                             .map { obj ->
                                 val id = Reflect.on(obj).get<Any>("id")
                                 when (id) {
                                     null -> {
-                                        // assign user,获取父entity 的user
-                                        Reflect.on(obj).set(oneToManyAnno.mappedBy, baseEntity)
-                                        //   entityManager.persist(obj)
+                                        if (oneToManyAnno.mappedBy.isNotBlank()) {
+                                            Reflect.on(obj).set(oneToManyAnno.mappedBy, baseEntity)
+                                        }
                                         obj
                                     }
                                     else -> {
                                         val oldNestedObj = entityManager.find(obj::class.java, id)
                                         val mergedObj = oldNestedObj.copyFrom(obj)
-                                        Reflect.on(mergedObj).set(oneToManyAnno.mappedBy, baseEntity)
-                                        //  entityManager.merge(mergedObj)
+                                        if (oneToManyAnno.mappedBy.isNotBlank()) {
+                                            Reflect.on(mergedObj).set(oneToManyAnno.mappedBy, baseEntity)
+                                        }
                                         mergedObj
                                     }
                                 }
@@ -118,7 +82,7 @@ abstract class BaseService<T, ID : Serializable>(
                     Reflect.on(any).call("addAll", list)
                 } else if (manyToManyAnno != null) {
                     val list = baseEntity.toOption()
-                            .flatMap { it -> Reflect.on(it).get<Any>(field.name).toOption() }
+                            .flatMap { Reflect.on(it).get<Any>(field.name).toOption() }
                             .map { it as MutableList<out BaseEntity> }
                             .getOrElse { listOf<BaseEntity>() }
                             .map { obj ->
@@ -128,7 +92,7 @@ abstract class BaseService<T, ID : Serializable>(
                                     else -> entityManager.find(obj::class.java, id)
                                 }
                             }
-                    if (!list.isEmpty()) {
+                    if (list.isNotEmpty()) {
                         Reflect.on(baseEntity).set(field.name, list)
                     }
                 }
@@ -142,7 +106,6 @@ abstract class BaseService<T, ID : Serializable>(
                 .flatMap { Reflect.on(it).get<Any>("id").toOption() }
                 .map { entityManager.find(type, it) }
     }
-
 }
 
 
