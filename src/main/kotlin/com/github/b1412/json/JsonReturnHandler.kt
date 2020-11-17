@@ -2,6 +2,7 @@ package com.github.b1412.json
 
 import arrow.core.getOrElse
 import arrow.core.toOption
+import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
@@ -47,6 +48,7 @@ class JsonReturnHandler : HandlerMethodReturnValueHandler, BeanPostProcessor {
         val rootEntityClass = result.first { it.simpleName == endpoint.entity.capitalize() }
         val firstLevelFields = fieldsOfClass(rootEntityClass)
         val objectMapper = ObjectMapper()
+        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         objectMapper.registerModule(Jdk8Module())
         objectMapper.registerModule(JavaTimeModule())
         objectMapper.registerModule(Hibernate5Module().configure(Hibernate5Module.Feature.FORCE_LAZY_LOADING, true))
