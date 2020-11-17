@@ -82,6 +82,9 @@ object JpaUtil {
             QueryOp.EQ -> {
                 cb.equal(searchPath, convertedValues.first())
             }
+            QueryOp.NE -> {
+                cb.notEqual(searchPath, convertedValues.first())
+            }
             QueryOp.LIKE -> {
                 cb.like(searchPath as Path<String>, "%$value%")
             }

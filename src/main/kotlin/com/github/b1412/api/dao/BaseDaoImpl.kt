@@ -1,6 +1,7 @@
 package com.github.b1412.api.dao
 
 import arrow.core.Either
+import arrow.core.firstOrNone
 import arrow.core.getOrElse
 import com.github.b1412.jpa.JpaUtil
 import org.slf4j.LoggerFactory
@@ -43,6 +44,6 @@ class BaseDaoImpl<T, ID : Serializable>(
     }
 
     override fun searchOneBy(filter: Map<String, String>): Either<Unit, T> {
-        return Either.fromNullable(searchByFilter(filter, Pageable.unpaged()).content[0])
+        return searchByFilter(filter, Pageable.unpaged()).firstOrNone().toEither { Unit }
     }
 }
