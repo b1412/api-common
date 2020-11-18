@@ -44,11 +44,12 @@ class JsonReturnHandler : HandlerMethodReturnValueHandler, BeanPostProcessor {
         val request = webRequest.getNativeRequest(HttpServletRequest::class.java)!!
         val embedded = request.getParameter("embedded")
         val endpoint = returnType.annotatedElement.declaredAnnotations.first { it is GraphRender }!! as GraphRender
-        val result = findClasses(BaseEntity::class.java, "classpath*:com/github/b1412/**/*.class")
+        val result = findClasses(BaseEntity::class.java, "classpath*:com/github/b1412/**/*.class") +
+                findClasses(BaseEntity::class.java, "classpath*:nz/co/**/*.class")
         val rootEntityClass = result.first { it.simpleName == endpoint.entity.capitalize() }
         val firstLevelFields = fieldsOfClass(rootEntityClass)
         val objectMapper = ObjectMapper()
-        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL)
         objectMapper.registerModule(Jdk8Module())
         objectMapper.registerModule(JavaTimeModule())
         objectMapper.registerModule(Hibernate5Module().configure(Hibernate5Module.Feature.FORCE_LAZY_LOADING, true))
