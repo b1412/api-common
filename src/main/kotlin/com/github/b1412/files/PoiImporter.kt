@@ -4,76 +4,81 @@ import com.github.b1412.files.filter.RowFilter
 import com.github.b1412.files.parser.CellParser
 import com.github.b1412.files.parser.FileParser
 import com.google.common.collect.Lists
-import org.apache.commons.csv.CSVFormat
 import org.apache.commons.lang3.StringUtils
 import org.apache.poi.ss.usermodel.Cell
 import org.apache.poi.ss.usermodel.Workbook
 import org.apache.poi.ss.usermodel.WorkbookFactory
 import org.joor.Reflect
 import java.io.File
-import java.io.FileReader
 
 object PoiImporter {
-
-    fun loadFile(file: File, fileParser: FileParser): List<List<List<String>>> {
-        var start = fileParser.start
-        var end = fileParser.end
-        val result = Lists.newArrayList<List<List<String>>>()
-
-        if (file.name.endsWith("csv")) {
-            val csvFileParser = CSVFormat.DEFAULT.parse(FileReader(file))
-            val csvRecords = csvFileParser.records
+    fun loadAllSheets(file: File): List<Pair<String, List<List<String>>>> {
+        val result = Lists.newArrayList<Pair<String, List<List<String>>>>()
+        val wb: Workbook = WorkbookFactory.create(file)
+        for (i in 0 until wb.numberOfSheets) {
             val sheetList = Lists.newArrayList<List<String>>()
-            val rows = csvFileParser.recordNumber.toInt()
-            if (start <= 0) {
-                start = 0
+            val sheet = wb.getSheetAt(i)
+            val sheetName = sheet.sheetName
+            for (rowIndex in 0..sheet.lastRowNum) {
+                val row = sheet.getRow(rowIndex)
+                val columns = Lists.newArrayList<String>()
+                if (row == null)
+                    continue
+                val cellNum = row.lastCellNum.toInt()
+                for (cellIndex in 0 until cellNum) {
+                    var column = ""
+                    val cell = row.getCell(cellIndex)
+                    if (cell != null) {
+                        when (cell.cellType) {
+                            Cell.CELL_TYPE_NUMERIC -> column = cell.numericCellValue.toString()
+                            Cell.CELL_TYPE_STRING -> column = cell.stringCellValue
+                            Cell.CELL_TYPE_BOOLEAN -> column = cell.booleanCellValue.toString() + ""
+                            Cell.CELL_TYPE_FORMULA -> column = cell.cellFormula
+                            Cell.CELL_TYPE_BLANK -> column = ""
+                        }
+                    }
+                    columns.add(column.trim())
+                }
+                sheetList.add(columns)
+            }
+            val filteredList = sheetList.filter { it.any { cell -> cell.isNotEmpty() } }
+            result.add(Pair(sheetName, filteredList))
+        }
+        return result
+    }
+
+    private fun loadFile(file: File, fileParser: FileParser): List<List<List<String>>> {
+        val result = Lists.newArrayList<List<List<String>>>()
+        val wb: Workbook = WorkbookFactory.create(file)
+        for (i in 0 until wb.numberOfSheets) {
+            var start = fileParser.start
+            var end = fileParser.end
+            if (fileParser.sheetNo > 0 && i != fileParser.sheetNo) {
+                result.add(Lists.newArrayList())
+                continue
+            }
+            val sheet = wb.getSheetAt(i)
+            val sheetList = Lists.newArrayList<List<String>>()
+            val rows = sheet.lastRowNum
+            if (start <= sheet.firstRowNum) {
+                start = sheet.firstRowNum
             }
             if (end >= rows) {
                 end = rows
             } else if (end <= 0) {
                 end += rows
             }
-
-            for (rowIndex in start until end) {
-                val record = csvRecords[rowIndex]
+            for (rowIndex in start..end) {
+                val row = sheet.getRow(rowIndex)
                 val columns = Lists.newArrayList<String>()
-                for (i in 0 until record.size()) {
-                    columns.add(record.get(i))
-
-                }
-                sheetList.add(columns)
-            }
-            result.add(sheetList)
-
-        } else {
-            val wb: Workbook = WorkbookFactory.create(file)
-            for (i in 0 until wb.numberOfSheets) {
-                if (fileParser.sheetNo > 0 && i != fileParser.sheetNo) {
-                    result.add(Lists.newArrayList())
+                if (row == null)
                     continue
-                }
-                val sheet = wb.getSheetAt(i)
-                val sheetList = Lists.newArrayList<List<String>>()
-                val rows = sheet.lastRowNum
-                if (start <= sheet.firstRowNum) {
-                    start = sheet.firstRowNum
-                }
-                if (end >= rows) {
-                    end = rows
-                } else if (end <= 0) {
-                    end += rows
-                }
-                for (rowIndex in start..end) {
-                    val row = sheet.getRow(rowIndex)
-                    val columns = Lists.newArrayList<String>()
-                    if (row == null)
-                        continue
-                    val cellNum = row.lastCellNum.toInt()
-                    for (cellIndex in row.firstCellNum until cellNum) {
-
-                        val cell = row.getCell(cellIndex) ?: continue
+                val cellNum = row.lastCellNum.toInt()
+                for (cellIndex in 0 until cellNum) {
+                    var column = ""
+                    val cell = row.getCell(cellIndex)
+                    if (cell != null) {
                         val cellType = cell.cellType
-                        var column = ""
                         when (cellType) {
                             Cell.CELL_TYPE_NUMERIC -> column = cell.numericCellValue.toString()
                             Cell.CELL_TYPE_STRING -> column = cell.stringCellValue
@@ -81,25 +86,23 @@ object PoiImporter {
                             Cell.CELL_TYPE_FORMULA -> column = cell.cellFormula
                             Cell.CELL_TYPE_BLANK -> column = " "
                         }
-                        columns.add(column.trim())
                     }
 
-                    val rowFilterFlagList = Lists.newArrayList<Boolean>()
-                    val rowFilterList = Lists.newArrayList<RowFilter>()
-                    for (k in rowFilterList.indices) {
-                        val rowFilter = rowFilterList[k]
-                        rowFilterFlagList.add(rowFilter.doFilter(rowIndex, columns))
-                    }
-                    if (!rowFilterFlagList.contains(false)) {
-                        sheetList.add(columns)
-                    }
+                    columns.add(column.trim())
                 }
-                result.add(sheetList)
-            }
 
+                val rowFilterFlagList = Lists.newArrayList<Boolean>()
+                val rowFilterList = Lists.newArrayList<RowFilter>()
+                for (k in rowFilterList.indices) {
+                    val rowFilter = rowFilterList[k]
+                    rowFilterFlagList.add(rowFilter.doFilter(rowIndex, columns))
+                }
+                sheetList.add(columns)
+            }
+            val filteredList = sheetList.filter { it.isNotEmpty() }
+            result.add(filteredList)
         }
         return result
-
     }
 
     fun loadSheet(file: File, fileParser: FileParser): List<List<String>> {
@@ -134,7 +137,8 @@ object PoiImporter {
             if (cellValidate != null) {
                 valid = cellValidate.validate(value)
                 if (!valid) {
-                    message = message + "value(" + value + ") is invalid in row " + (rowIndex + 1) + " column " + cell.index + "\n"
+                    message =
+                        message + "value(" + value + ") is invalid in row " + (rowIndex + 1) + " column " + cell.index + "\n"
                 }
             }
             if (valid) {
@@ -145,7 +149,7 @@ object PoiImporter {
                 }
                 val obj = convertedValue
                 name!!.split(",")
-                        .forEach { Reflect.on(model).set(it, obj) }
+                    .forEach { Reflect.on(model).set(it, obj) }
             }
         }
         if (fileParser.postRowProcessor != null) {
@@ -158,14 +162,12 @@ object PoiImporter {
         return model
     }
 
-    fun matchCell(fileParser: FileParser, index: Int): CellParser? {
+    private fun matchCell(fileParser: FileParser, index: Int): CellParser? {
         val cells = fileParser.cellParsers
         for (i in cells.indices) {
-            val cell = cells.get(i)
+            val cell = cells[i]
             if (index + 1 == cell.index) return cell
         }
         return null
     }
-
-
 }
